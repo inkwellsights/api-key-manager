@@ -16,7 +16,7 @@ create table api_keys (
   key_prefix text not null,
   last_four text not null,
   lookup_hash text not null unique,
-  environment text not null default 'live',
+  environment text not null default 'live' check (environment in ('live','test')),
   status text not null default 'active' check (status in ('active','disabled','revoked')),
   created_at timestamptz not null default now(),
   last_used_at timestamptz,
