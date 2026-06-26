@@ -147,7 +147,7 @@ export function Sidebar({ requestsThisMonth, total, onClose }: SidebarProps) {
         </p>
         <p className="text-xs text-text-muted mt-0.5">requests this month</p>
         <p className="text-xs text-accent mt-0.5">
-          {usagePct >= 0 ? `+${usagePct}%` : `${usagePct}%`} of quota used
+          {usagePct}% of monthly quota
         </p>
 
         {/* Progress bar */}
