@@ -101,7 +101,7 @@ const STATUS_CODES = [200, 200, 200, 200, 200, 200, 200, 401]; // ~87% 200
 
 // ── main ──────────────────────────────────────────────────────────────────────
 async function seed() {
-  console.log("=== API Key Manager — Seed Script ===\n");
+  console.log("=== API Key Manager - Seed Script ===\n");
 
   // 1. Wipe existing data (FK-safe order)
   console.log("Clearing existing data...");
@@ -225,10 +225,10 @@ async function seed() {
   console.log(`  Usage logs   : ${inserted}`);
   console.log(`  This-month   : ${MONTH_LOG_COUNT}`);
   console.log(`  Recent (<6h) : ${RECENT_COUNT}`);
-  console.log("\nPlaintext keys (stdout only — never committed):");
+  console.log("\nPlaintext keys (stdout only - never committed):");
   for (const k of insertedKeys) {
     // Already printed above; this is a consolidated recap
-    console.log(`  ${k.appName.padEnd(22)} [${k.status}] — key_id: ${k.id}`);
+    console.log(`  ${k.appName.padEnd(22)} [${k.status}] - key_id: ${k.id}`);
   }
 }
 
