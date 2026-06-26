@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed": "node supabase/seed.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
