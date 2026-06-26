@@ -6,6 +6,7 @@ import { Eye, Trash2, ChevronLeft, ChevronRight, PauseCircle, PlayCircle, Search
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { RevealKeyDialog } from "@/components/keys/RevealKeyDialog";
+import { Modal } from "@/components/ui/Modal";
 import { setKeyStatus, revokeKey } from "@/server/keys";
 import type { ApiKeyWithApp, KeyStatus } from "@/lib/types";
 
@@ -49,6 +50,8 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
   const [searchValue, setSearchValue] = useState(q);
   const [revealId, setRevealId] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [tableError, setTableError] = useState<string | null>(null);
+  const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep search value in sync when URL changes (e.g. browser back)
@@ -92,18 +95,28 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
   async function handleToggleStatus(id: string, current: KeyStatus) {
     if (current === "revoked") return;
     const next = current === "active" ? "disabled" : "active";
+    setTableError(null);
     startTransition(async () => {
-      await setKeyStatus(id, next);
-      router.refresh();
+      try {
+        await setKeyStatus(id, next);
+        router.refresh();
+      } catch (err: unknown) {
+        setTableError(err instanceof Error ? err.message : "Failed to update key status");
+      }
     });
   }
 
-  async function handleRevoke(id: string) {
-    if (!window.confirm("Revoke this API key? This action cannot be undone.")) return;
+  async function confirmRevoke() {
+    if (!revokeConfirmId) return;
+    const id = revokeConfirmId;
+    setRevokeConfirmId(null);
     setRevoking(id);
+    setTableError(null);
     try {
       await revokeKey(id);
       router.refresh();
+    } catch (err: unknown) {
+      setTableError(err instanceof Error ? err.message : "Failed to revoke key");
     } finally {
       setRevoking(null);
     }
@@ -150,6 +163,16 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
           </div>
         </div>
       </div>
+
+      {/* Inline error banner */}
+      {tableError && (
+        <div
+          className="mx-5 mt-4 rounded-lg border px-3 py-2 text-xs"
+          style={{ color: "var(--red)", background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}
+        >
+          {tableError}
+        </div>
+      )}
 
       {/* Table */}
       {rows.length === 0 ? (
@@ -292,7 +315,7 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
                         {row.status !== "revoked" && (
                           <button
                             type="button"
-                            onClick={() => handleRevoke(row.id)}
+                            onClick={() => setRevokeConfirmId(row.id)}
                             disabled={revoking === row.id}
                             aria-label="Revoke API key"
                             className="inline-flex items-center justify-center rounded-md p-1.5 min-w-[32px] min-h-[32px] text-text-muted hover:bg-white/10 transition-colors disabled:opacity-50"
@@ -361,6 +384,32 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
           </div>
         )}
       </div>
+
+      {/* Revoke confirm modal */}
+      <Modal open={revokeConfirmId !== null} onClose={() => setRevokeConfirmId(null)} title="Revoke API Key">
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">
+            Are you sure you want to revoke this API key? This action cannot be undone and the key will stop working immediately.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setRevokeConfirmId(null)}
+              className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted min-h-[40px] hover:bg-white/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmRevoke}
+              className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white min-h-[40px] disabled:opacity-50 transition-colors"
+              style={{ background: "var(--red)" }}
+            >
+              Revoke Key
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Reveal dialog */}
       <RevealKeyDialog

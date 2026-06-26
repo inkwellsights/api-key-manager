@@ -33,8 +33,9 @@ export function NewKeyModal() {
         if (apps.length > 0) setApplicationId(apps[0].id);
         setLoadingApps(false);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         setLoadingApps(false);
+        setError(err instanceof Error ? err.message : "Failed to load applications");
       });
   }, [open]);
 

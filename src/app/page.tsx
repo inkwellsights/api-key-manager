@@ -21,13 +21,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const status = (["active", "disabled", "revoked", "all"].includes(rawStatus)
     ? rawStatus
     : "all") as KeyStatus | "all";
-  const page = Math.max(1, parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1);
+  const PAGE_SIZE = 6;
+  const rawPage = Math.max(1, parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1);
 
-  const [stats, { rows, total }, usage] = await Promise.all([
+  const [stats, { rows: fetchedRows, total }, usage] = await Promise.all([
     getStats(),
-    listKeys({ search: q, status, page }),
+    listKeys({ search: q, status, page: rawPage, pageSize: PAGE_SIZE }),
     recentUsage(8),
   ]);
+
+  const clampedPage = total === 0 ? 1 : Math.min(rawPage, Math.max(1, Math.ceil(total / PAGE_SIZE)));
+  let rows = fetchedRows;
+  if (clampedPage !== rawPage) {
+    const { rows: refetchedRows } = await listKeys({ search: q, status, page: clampedPage, pageSize: PAGE_SIZE });
+    rows = refetchedRows;
+  }
 
   return (
     <div className="space-y-6">
@@ -41,9 +49,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <KeysTable
             rows={rows}
             total={total}
-            page={page}
+            page={clampedPage}
             q={q}
             status={status}
+            pageSize={PAGE_SIZE}
           />
           <RecentUsage rows={usage} />
         </div>

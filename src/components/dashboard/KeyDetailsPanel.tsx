@@ -95,6 +95,8 @@ export function KeyDetailsPanel({ rows }: KeyDetailsPanelProps) {
   const [revokeConfirmOpen, setRevokeConfirmOpen] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
+  const [regenConfirmOpen, setRegenConfirmOpen] = useState(false);
 
   const key = rows[0] ?? null;
 
@@ -113,7 +115,6 @@ export function KeyDetailsPanel({ rows }: KeyDetailsPanelProps) {
   const masked = `${key.key_prefix}...${key.last_four}`;
 
   async function handleRegenerate() {
-    if (!window.confirm("Regenerate this key? The old key will stop working immediately.")) return;
     setRegError(null);
     setRegenerating(true);
     try {
@@ -129,13 +130,14 @@ export function KeyDetailsPanel({ rows }: KeyDetailsPanelProps) {
   }
 
   async function handleRevoke() {
+    setRevokeError(null);
     setRevoking(true);
     try {
       await revokeKey(key.id);
       setRevokeConfirmOpen(false);
       router.refresh();
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      setRevokeError(err instanceof Error ? err.message : "Failed to revoke key");
     } finally {
       setRevoking(false);
     }
@@ -238,7 +240,7 @@ export function KeyDetailsPanel({ rows }: KeyDetailsPanelProps) {
           <div className="flex flex-col gap-2 pt-1">
             <button
               type="button"
-              onClick={handleRegenerate}
+              onClick={() => setRegenConfirmOpen(true)}
               disabled={regenerating || key.status === "revoked"}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white min-h-[40px] hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -271,17 +273,48 @@ export function KeyDetailsPanel({ rows }: KeyDetailsPanelProps) {
         onClose={() => setRevealOpen(false)}
       />
 
+      {/* Regenerate confirm modal */}
+      <Modal open={regenConfirmOpen} onClose={() => setRegenConfirmOpen(false)} title="Regenerate API Key">
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">
+            Regenerate this key? The old key will stop working immediately.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setRegenConfirmOpen(false)}
+              className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted min-h-[40px] hover:bg-white/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRegenConfirmOpen(false); handleRegenerate(); }}
+              disabled={regenerating}
+              className="flex-1 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white min-h-[40px] disabled:opacity-50 transition-colors"
+            >
+              Regenerate
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Revoke confirm modal */}
-      <Modal open={revokeConfirmOpen} onClose={() => setRevokeConfirmOpen(false)} title="Revoke API Key">
+      <Modal open={revokeConfirmOpen} onClose={() => { setRevokeConfirmOpen(false); setRevokeError(null); }} title="Revoke API Key">
         <div className="space-y-4">
           <p className="text-sm text-text-muted">
             Are you sure you want to revoke{" "}
             <span className="font-mono text-text">{masked}</span>? This action cannot be undone and the key will stop working immediately.
           </p>
+          {revokeError && (
+            <p className="text-xs rounded px-2 py-1 border" style={{ color: "var(--red)", background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}>
+              {revokeError}
+            </p>
+          )}
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setRevokeConfirmOpen(false)}
+              onClick={() => { setRevokeConfirmOpen(false); setRevokeError(null); }}
               className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted min-h-[40px] hover:bg-white/5 transition-colors"
             >
               Cancel
