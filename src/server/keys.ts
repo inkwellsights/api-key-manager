@@ -58,7 +58,19 @@ export async function listKeys(opts: { search?: string; status?: KeyStatus | "al
   const page = opts.page ?? 1, pageSize = opts.pageSize ?? 6;
   let q = supabaseAdmin.from("api_keys").select(SELECT, { count: "exact" });
   if (opts.status && opts.status !== "all") q = q.eq("status", opts.status);
-  if (opts.search) q = q.ilike("key_prefix", `%${opts.search}%`);
+  if (opts.search) {
+    // Search matches application name OR key prefix (case-insensitive).
+    // Strip PostgREST filter-reserved punctuation so user input can't break the .or() string.
+    const term = opts.search.replace(/[,()*.]/g, " ").trim();
+    if (term) {
+      const { data: apps } = await supabaseAdmin.from("applications").select("id").ilike("name", `%${term}%`);
+      const appIds = (apps ?? []).map((a) => a.id as string);
+      // Inside .or() the ilike wildcard is *, not %.
+      const orParts = [`key_prefix.ilike.*${term}*`];
+      if (appIds.length > 0) orParts.push(`application_id.in.(${appIds.join(",")})`);
+      q = q.or(orParts.join(","));
+    }
+  }
   q = q.order("created_at", { ascending: false }).range((page - 1) * pageSize, page * pageSize - 1);
   const { data, error, count } = await q;
   if (error) throw new Error(error.message);
