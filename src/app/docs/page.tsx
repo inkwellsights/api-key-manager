@@ -1,7 +1,5 @@
 import { BookOpen, Terminal, CheckCircle2, XCircle, Info } from "lucide-react";
 
-export const dynamic = "force-dynamic";
-
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-lg bg-bg border border-border p-4 font-mono text-xs leading-relaxed overflow-x-auto">

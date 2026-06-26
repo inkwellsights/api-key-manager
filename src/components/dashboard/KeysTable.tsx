@@ -83,7 +83,7 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
         router.push(`${pathname}?${params.toString()}`);
       }, 350);
     },
-    [router, status]
+    [router, status, pathname]
   );
 
   function handleStatusChange(val: string) {

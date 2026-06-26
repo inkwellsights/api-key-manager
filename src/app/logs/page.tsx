@@ -49,10 +49,16 @@ export default async function LogsPage({ searchParams }: PageProps) {
     parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1
   );
 
-  const { rows, total } = await listLogs({ page: rawPage, pageSize: PAGE_SIZE });
+  const { rows: fetchedRows, total } = await listLogs({ page: rawPage, pageSize: PAGE_SIZE });
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const clampedPage = Math.min(rawPage, totalPages);
+  const clampedPage = total === 0 ? 1 : Math.min(rawPage, totalPages);
+
+  let rows = fetchedRows;
+  if (clampedPage !== rawPage) {
+    const { rows: refetchedRows } = await listLogs({ page: clampedPage, pageSize: PAGE_SIZE });
+    rows = refetchedRows;
+  }
 
   const from = total === 0 ? 0 : (clampedPage - 1) * PAGE_SIZE + 1;
   const to = Math.min(clampedPage * PAGE_SIZE, total);
@@ -120,9 +126,8 @@ export default async function LogsPage({ searchParams }: PageProps) {
 
                   {/* Endpoint */}
                   <td className="px-5 py-3">
-                    <span className="font-mono text-xs text-text whitespace-nowrap">
-                      {row.method ?? "?"}{" "}
-                      <span className="text-text-muted">{row.endpoint ?? "/"}</span>
+                    <span className="font-mono text-xs text-text-muted whitespace-nowrap">
+                      {row.endpoint ?? "/"}
                     </span>
                   </td>
 
