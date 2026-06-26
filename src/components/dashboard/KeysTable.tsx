@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Eye, Trash2, ChevronLeft, ChevronRight, PauseCircle, PlayCircle, Search } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CopyButton } from "@/components/ui/CopyButton";
@@ -46,6 +46,7 @@ interface KeysTableProps {
 
 export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTableProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [, startTransition] = useTransition();
   const [searchValue, setSearchValue] = useState(q);
   const [revealId, setRevealId] = useState<string | null>(null);
@@ -67,7 +68,7 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
     Object.entries(overrides).forEach(([k, v]) => {
       if (v && v !== "all" && v !== "1") params.set(k, v);
     });
-    router.push(`/?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   const handleSearchChange = useCallback(
@@ -79,7 +80,7 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
         if (value) params.set("q", value);
         if (status !== "all") params.set("status", status);
         // Reset page on new search
-        router.push(`/?${params.toString()}`);
+        router.push(`${pathname}?${params.toString()}`);
       }, 350);
     },
     [router, status]
@@ -89,7 +90,7 @@ export function KeysTable({ rows, total, page, q, status, pageSize = 6 }: KeysTa
     const params = new URLSearchParams();
     if (searchValue) params.set("q", searchValue);
     if (val !== "all") params.set("status", val);
-    router.push(`/?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   async function handleToggleStatus(id: string, current: KeyStatus) {
