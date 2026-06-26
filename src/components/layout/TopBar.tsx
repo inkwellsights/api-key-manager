@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Menu, Plus } from "lucide-react";
+import { Menu } from "lucide-react";
+import { NewKeyModal } from "@/components/keys/NewKeyModal";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/": {
@@ -33,14 +34,9 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
 interface TopBarProps {
   /** Callback to toggle the mobile sidebar drawer */
   onMenuToggle: () => void;
-  /**
-   * Callback for the New API Key button.
-   * Wired to NewKeyModal in Task 8.
-   */
-  onNewKey?: () => void;
 }
 
-export function TopBar({ onMenuToggle, onNewKey }: TopBarProps) {
+export function TopBar({ onMenuToggle }: TopBarProps) {
   const pathname = usePathname();
 
   // Match exact or prefix (e.g. /keys/abc -> /keys)
@@ -76,17 +72,8 @@ export function TopBar({ onMenuToggle, onNewKey }: TopBarProps) {
         </div>
       </div>
 
-      {/* Right: New API Key button */}
-      <button
-        type="button"
-        // wired to NewKeyModal in Task 8
-        onClick={onNewKey}
-        className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white min-h-[40px] hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-panel transition-colors"
-      >
-        <Plus size={16} aria-hidden="true" />
-        <span className="hidden sm:inline">New API Key</span>
-        <span className="sm:hidden">New</span>
-      </button>
+      {/* Right: New API Key modal trigger */}
+      <NewKeyModal />
     </header>
   );
 }
