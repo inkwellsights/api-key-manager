@@ -18,7 +18,8 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0 && a.length === b.length;
 }
 
-export function middleware(req: NextRequest) {
+// Next.js 16 renamed the "middleware" convention to "proxy".
+export function proxy(req: NextRequest) {
   const password = process.env.DASHBOARD_PASSWORD;
 
   // Gate is DISABLED when DASHBOARD_PASSWORD is unset or empty — allows local dev
@@ -60,7 +61,7 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   /**
-   * Run middleware on every route EXCEPT:
+   * Run on every route EXCEPT:
    *   /api/*           — /api/data must stay open for Bearer-auth API consumers
    *   /_next/static    — static assets
    *   /_next/image     — image optimization
